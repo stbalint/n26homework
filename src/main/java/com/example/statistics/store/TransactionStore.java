@@ -1,10 +1,6 @@
 package com.example.statistics.store;
 
 import static com.example.statistics.store.StatisticsUpdateHelper.addReportToStatistics;
-import static com.example.statistics.store.TimeTresholdProvider.ENABLED_TIME_INTERVAL;
-
-import java.util.LinkedList;
-import java.util.Queue;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,7 +22,7 @@ public class TransactionStore {
 	@Autowired
 	private StatisticsRefreshScheduler statisticsRefreshScheduler;
 
-	private Queue<TransactionReport> reportQueue = new LinkedList<>();
+	private OrderedTransactionReportList reportQueue = new OrderedTransactionReportList();
 
 	private TransactionStatistics transactionStatistics = new TransactionStatistics.Builder().build();
 
@@ -35,10 +31,22 @@ public class TransactionStore {
 		if (checkIfTransactionIsOld(transactionReport, timeTreshold)) {
 			return false;
 		}
-		initializeSchedulerIfRequired(transactionReport);
-		reportQueue.add(transactionReport);
+
+		insertToQueueAndScheduleRefresh(transactionReport);
 		transactionStatistics = addReportToStatistics(transactionReport, transactionStatistics);
 		return true;
+	}
+
+	private void insertToQueueAndScheduleRefresh(TransactionReport transactionReport) {
+		if (isReportAddedToTheHeadOfTheQueue(transactionReport)) {
+			statisticsRefreshScheduler.resetScheduler(transactionReport);
+		}
+		reportQueue.addInOrder(transactionReport);
+	}
+
+	private boolean isReportAddedToTheHeadOfTheQueue(TransactionReport transactionReport) {
+		return reportQueue.isEmpty()
+				|| reportQueue.peek().getTimestamp().longValue() > transactionReport.getTimestamp().longValue();
 	}
 
 	public synchronized void cleanupQueueAndUpdateStatistics() {
@@ -63,12 +71,6 @@ public class TransactionStore {
 	private void resetScheduler() {
 		TransactionReport report = reportQueue.peek();
 		if (report != null) {
-			statisticsRefreshScheduler.resetScheduler(report);
-		}
-	}
-
-	private void initializeSchedulerIfRequired(TransactionReport report) {
-		if (reportQueue.isEmpty()) {
 			statisticsRefreshScheduler.resetScheduler(report);
 		}
 	}

@@ -87,6 +87,45 @@ public class TransactionStoreTest {
 	}
 
 	@Test
+	public void updateOrderInetagrationTest() {
+
+		TransactionReport report1 = new TransactionReport(20.0, 2000L);
+		TransactionReport report2 = new TransactionReport(10.0, 1000L);
+		TransactionReport report3 = new TransactionReport(30.0, 1500L);
+
+		Mockito.when(timeTresholdProvider.getTreshold()).thenReturn(500L).thenReturn(500L).thenReturn(500L)
+				.thenReturn(1001L).thenReturn(1501L).thenReturn(2001L);
+
+		target.update(report1);
+		target.update(report2);
+		target.update(report3);
+
+		TransactionStatistics statistics = target.getStatistics();
+
+		Assert.assertEquals(20.0, statistics.getAvg(), 0.0001);
+		Assert.assertEquals(3, statistics.getCount());
+
+		target.cleanupQueueAndUpdateStatistics();
+		statistics = target.getStatistics();
+
+		Assert.assertEquals(25.0, statistics.getAvg(), 0.0001);
+		Assert.assertEquals(2, statistics.getCount());
+
+		target.cleanupQueueAndUpdateStatistics();
+		statistics = target.getStatistics();
+
+		Assert.assertEquals(20.0, statistics.getAvg(), 0.0001);
+		Assert.assertEquals(1, statistics.getCount());
+
+		target.cleanupQueueAndUpdateStatistics();
+		statistics = target.getStatistics();
+
+		Assert.assertEquals(0.0, statistics.getAvg(), 0.0001);
+		Assert.assertEquals(0, statistics.getCount());
+
+	}
+
+	@Test
 	public void initilizeSchedulerTest() {
 		TransactionReport report1 = new TransactionReport(10.1, 1000L);
 		TransactionReport report2 = new TransactionReport(10.1, 1500L);
@@ -104,7 +143,7 @@ public class TransactionStoreTest {
 	}
 
 	@Test
-	public void resetSchedulerTest() {
+	public void resetSchedulerAfterCleanupTest() {
 		TransactionReport report1 = new TransactionReport(10.1, 1000L);
 		TransactionReport report2 = new TransactionReport(10.1, 1500L);
 
@@ -117,6 +156,20 @@ public class TransactionStoreTest {
 
 		target.cleanupQueueAndUpdateStatistics();
 
+		Mockito.verify(statisticsRefreshScheduler).resetScheduler(report2);
+	}
+
+	@Test
+	public void resetSchedulerOnNewHeadReportTest() {
+		TransactionReport report1 = new TransactionReport(10.1, 1000L);
+		TransactionReport report2 = new TransactionReport(10.1, 900L);
+
+		Mockito.when(timeTresholdProvider.getTreshold()).thenReturn(500L).thenReturn(500L);
+
+		target.update(report1);
+		target.update(report2);
+
+		Mockito.verify(statisticsRefreshScheduler).resetScheduler(report1);
 		Mockito.verify(statisticsRefreshScheduler).resetScheduler(report2);
 	}
 
