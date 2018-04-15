@@ -96,8 +96,7 @@ public class TransactionStoreTest {
 		target.update(report1);
 		target.update(report2);
 
-		Mockito.verify(statisticsRefreshScheduler)
-				.resetScheduler(1000 + TimeTresholdProvider.ENABLED_TIME_INTERVAL + 1);
+		Mockito.verify(statisticsRefreshScheduler).resetScheduler(report1);
 
 		target.cleanupQueueAndUpdateStatistics();
 
@@ -114,13 +113,11 @@ public class TransactionStoreTest {
 		target.update(report1);
 		target.update(report2);
 
-		Mockito.verify(statisticsRefreshScheduler)
-				.resetScheduler(1000 + TimeTresholdProvider.ENABLED_TIME_INTERVAL + 1);
+		Mockito.verify(statisticsRefreshScheduler).resetScheduler(report1);
 
 		target.cleanupQueueAndUpdateStatistics();
 
-		Mockito.verify(statisticsRefreshScheduler)
-				.resetScheduler(1500 + TimeTresholdProvider.ENABLED_TIME_INTERVAL + 1);
+		Mockito.verify(statisticsRefreshScheduler).resetScheduler(report2);
 	}
 
 }

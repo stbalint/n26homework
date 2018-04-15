@@ -63,13 +63,13 @@ public class TransactionStore {
 	private void resetScheduler() {
 		TransactionReport report = reportQueue.peek();
 		if (report != null) {
-			statisticsRefreshScheduler.resetScheduler(report.getTimestamp() + ENABLED_TIME_INTERVAL + 1);
+			statisticsRefreshScheduler.resetScheduler(report);
 		}
 	}
 
 	private void initializeSchedulerIfRequired(TransactionReport report) {
 		if (reportQueue.isEmpty()) {
-			statisticsRefreshScheduler.resetScheduler(report.getTimestamp() + ENABLED_TIME_INTERVAL + 1);
+			statisticsRefreshScheduler.resetScheduler(report);
 		}
 	}
 
